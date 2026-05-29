@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ထောက်ပို့ထီ</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #fff;
+      color: #333;
+    }
+    
+    .container {
+      display: flex;
+      height: 100vh;
+      background: linear-gradient(135deg, #fff 0%, #ffe6e6 100%);
+    }
+    
+    .panel {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      border-right: 3px solid #dc143c;
+    }
+    
+    .panel:last-child {
+      border-right: none;
+    }
+    
+    .panel-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #dc143c;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    
+    .input-group {
+      margin-bottom: 15px;
+    }
+    
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #dc143c;
+      border-radius: 5px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #dc143c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    button:hover {
+      background: #b30a2f;
+    }
+    
+    button:active {
+      transform: scale(0.98);
+    }
+    
+    .ticket-item {
+      background: white;
+      border: 2px solid #dc143c;
+      border-radius: 5px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .ticket-item.matched {
+      background: #ffcccc;
+      border-color: #ff6b6b;
+      box-shadow: 0 0 10px rgba(220, 20, 60, 0.5);
+    }
+    
+    .ticket-number {
+      font-weight: bold;
+      font-size: 18px;
+      color: #dc143c;
+    }
+    
+    .delete-btn {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    .delete-btn:hover {
+      background: #ff5252;
+    }
+    
+    .winning-display {
+      background: #fff;
+      border: 3px solid #dc143c;
+      border-radius: 5px;
+      padding: 15px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .winning-number {
+      font-size: 48px;
+      font-weight: bold;
+      color: #dc143c;
+      font-family: 'Courier New', monospace;
+    }
+    
+    .stats {
+      background: white;
+      border: 2px solid #dc143c;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 20px;
+      text-align: center;
+    }
+    
+    .stat-item {
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    
+    .stat-label {
+      color: #666;
+      font-weight: bold;
+    }
+    
+    .stat-value {
+      color: #dc143c;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    
+    .empty-message {
+      text-align: center;
+      color: #999;
+      padding: 20px;
+      font-style: italic;
+    }
+  </style>
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#dc143c">
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <!-- Left Panel: Sold Tickets -->
+    <div class="panel">
+      <div class="panel-title">🎫 ရောင်းထားတဲ့ထီ</div>
+      
+      <div class="input-group">
+        <input type="text" id="ticketInput" placeholder="ထီနံပါတ်ထည့်သွင်းပါ" maxlength="10">
+        <button onclick="addTicket()">ထီထည့်သွင်းမည်</button>
+      </div>
+      
+      <div id="ticketList"></div>
+      
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-label">စုစုပေါင်းထီ:</span>
+          <span class="stat-value" id="totalTickets">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">ပေါက်မဲ:</span>
+          <span class="stat-value" id="matchedCount">0</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right Panel: Winning Numbers -->
+    <div class="panel">
+      <div class="panel-title">🎯 ဆုမဲ</div>
+      
+      <div class="input-group">
+        <input type="text" id="winningInput" placeholder="ဆုမဲနံပါတ်ထည့်သွင်းပါ" maxlength="10">
+        <button onclick="setWinningNumber()">ဆုမဲသတ်မှတ်မည်</button>
+      </div>
+      
+      <div class="winning-display">
+        <div style="color: #999; margin-bottom: 10px;">ဆုမဲ</div>
+        <div class="winning-number" id="winningDisplay">-</div>
+      </div>
+      
+      <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 5px; padding: 15px; margin-bottom: 20px;">
+        <div style="font-weight: bold; color: #856404; margin-bottom: 10px;">📋 အချက်အလက်</div>
+        <div style="color: #856404; font-size: 14px; line-height: 1.6;">
+          • ဆုမဲနံပါတ်ထည့်သွင်းပါ<br>
+          • ရောင်းထားတဲ့ထီနဲ့ ကိုက်ညီရင် အနီရောင်ဖြင့်ပြပေးမည်<br>
+          • အခြားထီတွေကို ဖျက်ရန် ဖျက်ခလုတ်ကိုနှိပ်ပါ
+        </div>
+      </div>
+      
+      <button onclick="clearAll()" style="background: #999;">အားလုံးရှင်းလင်းမည်</button>
+    </div>
+  </div>
+
+  <script>
+    let tickets = [];
+    let winningNumber = null;
+
+    function addTicket() {
+      const input = document.getElementById('ticketInput');
+      const number = input.value.trim();
+      
+      if (!number) {
+        alert('ထီနံပါတ်ထည့်သွင်းပါ');
+        return;
+      }
+      
+      tickets.push(number);
+      input.value = '';
+      updateUI();
+    }
+
+    function deleteTicket(index) {
+      tickets.splice(index, 1);
+      updateUI();
+    }
+
+    function setWinningNumber() {
+      const input = document.getElementById('winningInput');
+      const number = input.value.trim();
+      
+      if (!number) {
+        alert('ဆုမဲနံပါတ်ထည့်သွင်းပါ');
+        return;
+      }
+      
+      winningNumber = number;
+      input.value = '';
+      updateUI();
+    }
+
+    function clearAll() {
+      if (confirm('အားလုံးရှင်းလင်းမည်လား?')) {
+        tickets = [];
+        winningNumber = null;
+        updateUI();
+      }
+    }
+
+    function updateUI() {
+      // Update ticket list
+      const ticketList = document.getElementById('ticketList');
+      if (tickets.length === 0) {
+        ticketList.innerHTML = '<div class="empty-message">ထီမထည့်သွင်းရသေးပါ</div>';
+      } else {
+        ticketList.innerHTML = tickets.map((ticket, index) => {
+          const isMatched = winningNumber && ticket === winningNumber;
+          return `
+            <div class="ticket-item ${isMatched ? 'matched' : ''}">
+              <span class="ticket-number">${ticket}${isMatched ? ' ✓ ပေါက်မဲ' : ''}</span>
+              <button class="delete-btn" onclick="deleteTicket(${index})">ဖျက်မည်</button>
+            </div>
+          `;
+        }).join('');
+      }
+      
+      // Update winning number display
+      document.getElementById('winningDisplay').textContent = winningNumber || '-';
+      
+      // Update stats
+      document.getElementById('totalTickets').textContent = tickets.length;
+      const matchedCount = winningNumber ? tickets.filter(t => t === winningNumber).length : 0;
+      document.getElementById('matchedCount').textContent = matchedCount;
+    }
+
+    // Initialize
+    updateUI();
+    
+    // Allow Enter key to add ticket
+    document.getElementById('ticketInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') addTicket();
+    });
+    
+    document.getElementById('winningInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') setWinningNumber();
+    });
+  </script>
+</body>
+</html>
